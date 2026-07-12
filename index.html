@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Care Census — Qualified Health (Demo)</title>
+<style>
+  /* ================= tokens ================= */
+  :root{
+    color-scheme: light; /* deliberate: this is a fidelity mockup of QH's light clinical UI */
+    --bg:#F7F9FA; --surface:#FFFFFF; --ink:#1A2B32; --muted:#5C6E76; --faint:#8FA0A7;
+    --border:#E2E8ED; --border-strong:#CBD6DC;
+    --primary:#07404F; --primary-hover:#0A5163; --primary-soft:#E4EEF0;
+    --high:#B33A1B; --high-bg:#FBEBE5; --high-border:#EFC9BC;
+    --med:#8A6100; --med-bg:#FBF3DF; --med-border:#EBD9A8;
+    --watch:#3E6472; --watch-bg:#EAF1F3; --watch-border:#CFDEE3;
+    --ok:#1E6B4F; --ok-bg:#E6F2ED; --ok-border:#BFDDCF;
+    --dim:#5C6E76; --dim-bg:#EFF2F4; --dim-border:#D8DFE3;
+    --shadow:0 1px 2px rgba(10,40,50,.06),0 4px 16px rgba(10,40,50,.07);
+    --shadow-lg:0 8px 40px rgba(7,64,79,.22);
+    --radius:8px;
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;
+    font-feature-settings:"cv05" 1; min-width:1180px;}
+  button{font:inherit;cursor:pointer}
+  input,select{font:inherit;color:var(--ink)}
+  ::selection{background:var(--primary-soft)}
+
+  /* ================= top bar ================= */
+  .topbar{position:fixed;inset:0 0 auto 0;height:56px;background:var(--primary);color:#fff;
+    display:flex;align-items:center;gap:20px;padding:0 20px;z-index:60}
+  .wordmark{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+  .wordmark .qh{font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .wordmark .qh span{color:#8FD0C6}
+  .wordmark .module{font-size:13px;color:#C7DDE0;border-left:1px solid rgba(255,255,255,.25);padding-left:10px}
+  .inst{font-size:13px;color:#C7DDE0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .inst b{color:#fff;font-weight:600}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#E8F2F3;white-space:nowrap}
+  .tchip svg{flex:none}
+  .tchip.user{background:rgba(255,255,255,.16)}
+  .tchip .avatar{width:18px;height:18px;border-radius:50%;background:#8FD0C6;color:#07404F;
+    display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+
+  /* ================= shell ================= */
+  .shell{display:flex;padding-top:56px;min-height:100vh}
+  .nav{width:176px;flex:none;background:var(--surface);border-right:1px solid var(--border);
+    padding:14px 10px;position:sticky;top:56px;height:calc(100vh - 56px)}
+  .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--muted);
+    text-decoration:none;font-size:13px;font-weight:500;position:relative;margin-bottom:2px}
+  .nav a svg{flex:none;opacity:.75}
+  .nav a.active{background:var(--primary-soft);color:var(--primary);font-weight:600}
+  .nav a.active svg{opacity:1}
+  .nav a:not(.active):hover{background:var(--bg)}
+  .nav a:not(.active):hover::after{content:"Not part of this demo";position:absolute;left:calc(100% + 8px);top:50%;
+    transform:translateY(-50%);background:var(--ink);color:#fff;font-size:11px;font-weight:400;padding:4px 8px;
+    border-radius:5px;white-space:nowrap;z-index:70;pointer-events:none}
+  .main{flex:1;padding:20px 24px 72px;min-width:0}
+
+  /* ================= metrics ================= */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .k{font-size:22px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .stat .k .unit{font-size:13px;font-weight:600;color:var(--muted)}
+  .metrics-note{font-size:12px;color:var(--faint);margin:8px 2px 0}
+  .scanline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--primary);
+    margin:14px 2px 6px;opacity:0;transform:translateY(4px);transition:opacity .7s ease,transform .7s ease}
+  .scanline.show{opacity:1;transform:none}
+  .scanline .dot{width:7px;height:7px;border-radius:50%;background:#2E9E8B;flex:none;
+    box-shadow:0 0 0 0 rgba(46,158,139,.5);animation:pulse 2.4s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,158,139,.45)}70%{box-shadow:0 0 0 7px rgba(46,158,139,0)}100%{box-shadow:0 0 0 0 rgba(46,158,139,0)}}
+  @media (prefers-reduced-motion:reduce){
+    .scanline{transition:none}.scanline .dot{animation:none}
+    .drawer,.scrim,.toast{transition:none !important;animation:none !important}
+  }
+
+  /* ================= controls ================= */
+  .controls{display:flex;align-items:center;gap:10px;margin:16px 0 12px;flex-wrap:wrap}
+  .controls .search{flex:1;min-width:220px;max-width:340px;position:relative}
+  .controls .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint)}
+  .controls input[type=search]{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border-strong);
+    border-radius:6px;background:var(--surface);outline:none}
+  .controls input[type=search]:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(7,64,79,.12)}
+  .controls select{padding:7px 28px 7px 10px;border:1px solid var(--border-strong);border-radius:6px;
+    background:var(--surface);outline:none;appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235C6E76' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center}
+  .controls select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(7,64,79,.12)}
+  .controls .count{margin-left:auto;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* ================= table ================= */
+  .tablecard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+  .tablecard table{min-width:1020px}
+  .tablecard thead th{position:sticky;top:0;background:var(--surface);z-index:5;text-align:left;font-size:11px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;
+    padding:10px 14px;border-bottom:1px solid var(--border-strong);white-space:nowrap}
+  .tablecard tbody td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  .tablecard tbody tr{cursor:pointer}
+  .tablecard tbody tr:hover{background:#F2F6F7}
+  .tablecard tbody tr.selected{background:var(--primary-soft)}
+  .tablecard tbody tr:last-child td{border-bottom:none}
+  .rank{font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);width:1%}
+  .pname{font-weight:600;white-space:nowrap}
+  .psub{font-size:12px;color:var(--muted);white-space:nowrap}
+  .opp{max-width:340px;line-height:1.45}
+  .evt{white-space:nowrap;color:var(--muted);font-size:13px}
+  .evt b{color:var(--ink);font-weight:500}
+
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
+    padding:2px 9px;border-radius:6px;border:1px solid;white-space:nowrap;line-height:1.6}
+  .chip.high{color:var(--high);background:var(--high-bg);border-color:var(--high-border)}
+  .chip.med{color:var(--med);background:var(--med-bg);border-color:var(--med-border)}
+  .chip.watch{color:var(--watch);background:var(--watch-bg);border-color:var(--watch-border)}
+  .chip.guide{color:var(--primary);background:var(--primary-soft);border-color:#C9DBDF;font-weight:500}
+  .chip.status-new{color:var(--primary);background:var(--primary-soft);border-color:#C9DBDF}
+  .chip.status-rev{color:var(--med);background:var(--med-bg);border-color:var(--med-border)}
+  .chip.status-app{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-border)}
+  .chip.status-dis{color:var(--dim);background:var(--dim-bg);border-color:var(--dim-border)}
+  .tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;letter-spacing:.03em;
+    text-transform:uppercase;color:var(--muted);background:var(--dim-bg);border:1px solid var(--dim-border);
+    border-radius:5px;padding:1px 7px;white-space:nowrap}
+  .tag.ai{color:#5B4B8A;background:#EFEBF7;border-color:#DAD1EC}
+  .tag.det{color:var(--primary);background:var(--primary-soft);border-color:#C9DBDF}
+
+  /* ================= drawer ================= */
+  .scrim{position:fixed;inset:56px 0 0 0;background:rgba(12,36,44,.28);opacity:0;pointer-events:none;
+    transition:opacity .25s ease;z-index:80}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:56px;right:0;bottom:0;width:45%;min-width:560px;background:var(--surface);
+    border-left:1px solid var(--border);box-shadow:var(--shadow-lg);transform:translateX(103%);
+    transition:transform .28s cubic-bezier(.2,.8,.25,1);z-index:90;display:flex;flex-direction:column}
+  .drawer.open{transform:none}
+  .drawer-scroll{overflow-y:auto;flex:1;padding:20px 24px 28px}
+  .dclose{position:absolute;top:14px;right:16px;width:30px;height:30px;border-radius:6px;border:1px solid var(--border);
+    background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center}
+  .dclose:hover{background:var(--bg);color:var(--ink)}
+  .dh-name{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:0 36px 2px 0}
+  .dh-sub{font-size:13px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .dh-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+  .dsec{margin-top:20px}
+  .dsec>h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+    font-weight:700;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .rulebox{border:1px solid #C9DBDF;background:var(--primary-soft);border-radius:var(--radius);padding:12px 14px}
+  .rulebox .rid{font-weight:700;color:var(--primary)}
+  .synth{border:1px solid var(--border);border-left:3px solid #7A68B3;border-radius:var(--radius);
+    padding:12px 14px;background:#FBFAFD}
+  .synth p{margin:0 0 8px}
+  .synth .disclaimer{font-size:11.5px;color:#6b5f8f;margin:0}
+  .ev{border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;margin-bottom:8px;background:var(--surface)}
+  .ev .fact{font-weight:600;margin-bottom:4px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .ev blockquote{margin:4px 0 6px;padding:6px 10px;border-left:3px solid var(--border-strong);
+    background:var(--bg);border-radius:0 6px 6px 0;font-size:13px;color:#3A4B52;font-style:italic}
+  .ev .src{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .ev .src .doc{font-weight:600;color:var(--primary)}
+  .viewsrc{margin-left:auto;background:none;border:1px solid var(--border-strong);border-radius:5px;
+    padding:2px 9px;font-size:11.5px;font-weight:600;color:var(--primary)}
+  .viewsrc:hover{background:var(--primary-soft);border-color:var(--primary)}
+  .thtable{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .thtable th{background:var(--bg);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);width:50%}
+  .thtable td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;font-size:13px}
+  .thtable tr:last-child td{border-bottom:none}
+  .thtable td+td{border-left:1px solid var(--border)}
+  .thtable .miss{color:var(--high);font-weight:600}
+  .th-note{font-size:11.5px;color:var(--faint);margin-top:6px}
+  .gref{display:inline;background:none;border:none;padding:0;font:inherit;font-size:13px;
+    color:var(--ink);text-align:left;cursor:pointer;border-bottom:1px dashed #9FB6BC;line-height:1.5}
+  .gref:hover,.gref:focus-visible{color:var(--primary);border-bottom:1px solid var(--primary)}
+  .gref .gicon{display:inline-block;vertical-align:-1px;margin-left:4px;color:var(--primary);opacity:.75}
+  .gstrength{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--primary);
+    background:var(--primary-soft);border:1px solid #C9DBDF;border-radius:5px;padding:2px 8px;margin-bottom:10px;
+    font-family:"Inter","Segoe UI",system-ui,sans-serif}
+
+  /* actions */
+  .actions{border-top:1px solid var(--border);padding:14px 24px 16px;background:var(--surface)}
+  .btnrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{border-radius:6px;padding:8px 16px;font-weight:600;font-size:13.5px;border:1px solid transparent}
+  .btn.primary{background:var(--primary);color:#fff}
+  .btn.primary:hover{background:var(--primary-hover)}
+  .btn.secondary{background:var(--surface);color:var(--ink);border-color:var(--border-strong)}
+  .btn.secondary:hover{background:var(--bg)}
+  .btn.small{padding:6px 12px;font-size:12.5px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .actions .fine{font-size:11.5px;color:var(--faint);margin:10px 0 0}
+  .chooser{margin-top:10px;border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--bg)}
+  .chooser .q{font-size:12.5px;font-weight:600;margin-bottom:8px}
+  .chooser .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .chooser select{padding:7px 10px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);min-width:260px}
+  .decided{border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;background:var(--bg);font-size:13px}
+  .decided b{font-weight:600}
+
+  /* ================= modal ================= */
+  .modalwrap{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:120}
+  .modalwrap.open{display:flex}
+  .modalwrap .mscrim{position:absolute;inset:0;background:rgba(12,36,44,.45)}
+  .modal{position:relative;width:620px;max-width:calc(100vw - 60px);max-height:78vh;overflow-y:auto;
+    background:var(--surface);border-radius:10px;box-shadow:var(--shadow-lg);padding:22px 24px}
+  .modal h4{margin:0 26px 2px 0;font-size:15px}
+  .modal .msub{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .docpage{border:1px solid var(--border);border-radius:8px;background:#FDFDFB;padding:18px 20px;
+    font-family:Georgia,"Times New Roman",serif;font-size:13.5px;line-height:1.7;color:#2A363C}
+  .docpage .dochead{font-family:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:12px;
+    display:flex;justify-content:space-between;gap:10px;font-family:"Inter","Segoe UI",system-ui,sans-serif}
+  .docpage mark{background:#FFF3C2;border-bottom:2px solid #E5C453;padding:1px 2px}
+  .modal .mfoot{font-size:11.5px;color:var(--faint);margin-top:12px}
+
+  /* ================= toasts ================= */
+  .toasts{position:fixed;right:20px;bottom:52px;z-index:140;display:flex;flex-direction:column;gap:8px;width:360px}
+  .toast{background:var(--ink);color:#fff;border-radius:8px;padding:11px 14px;box-shadow:var(--shadow-lg);
+    font-size:13px;display:flex;gap:10px;align-items:flex-start;animation:toastin .3s ease}
+  .toast svg{flex:none;margin-top:1px}
+  .toast .audit{display:block;font-size:11px;color:#9FB6BC;margin-top:3px;font-variant-numeric:tabular-nums}
+  @keyframes toastin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ================= footer ================= */
+  .demofoot{position:fixed;inset:auto 0 0 0;background:var(--ink);color:#C9D6DA;font-size:12px;
+    text-align:center;padding:7px 16px;z-index:150;letter-spacing:.01em}
+  .demofoot b{color:#fff;font-weight:600}
+</style>
+
+<!-- ============ top bar ============ -->
+<header class="topbar">
+  <div class="wordmark">
+    <span class="qh">Qualified<span>Health</span></span>
+    <span class="module">Care Census</span>
+  </div>
+  <div class="inst"><b>UTMB</b> · Sealy Heart and Vascular Institute — Cardiology</div>
+  <div class="right">
+    <span class="tchip" title="Every action in this workspace is written to an immutable audit trail">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+      HIPAA · All actions logged
+    </span>
+    <span class="tchip" title="Model powering extraction and synthesis">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M19.1 4.9l-2.8 2.8M7.7 16.3l-2.8 2.8"/></svg>
+      Claude Sonnet 4.5
+    </span>
+    <span class="tchip user"><span class="avatar">AR</span>Dr. A. Reyes, MD — Cardiology</span>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- ============ left nav ============ -->
+  <nav class="nav" aria-label="Modules">
+    <a href="#" class="active" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>
+      Census</a>
+    <a href="#" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
+      My Reviews</a>
+    <a href="#" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+      Outcomes</a>
+    <a href="#" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+      Audit Log</a>
+    <a href="#" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings</a>
+  </nav>
+
+  <!-- ============ main ============ -->
+  <main class="main">
+    <div class="metrics">
+      <div class="stat"><div class="k">1,042,381</div><div class="l">patients screened</div></div>
+      <div class="stat"><div class="k" id="openFlags">312</div><div class="l">open flags</div></div>
+      <div class="stat"><div class="k">78<span class="unit">%</span></div><div class="l">reviewed within 7 days</div></div>
+      <div class="stat"><div class="k">12,400<span class="unit"> hrs</span></div><div class="l">equivalent chart review automated</div></div>
+    </div>
+    <div class="metrics-note">Continuously screened against evidence-based appropriateness criteria.</div>
+    <div class="scanline" id="scanline"><span class="dot"></span>
+      Screened <b>&nbsp;1,042,381&nbsp;</b> records · surfaced <b>&nbsp;312&nbsp;</b> for clinician review — last cycle completed 04:36 today
+    </div>
+
+    <div class="controls">
+      <div class="search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="q" placeholder="Search patient, MRN, or opportunity…" aria-label="Search census">
+      </div>
+      <select id="fArea" aria-label="Filter by condition area">
+        <option value="">All condition areas</option>
+        <option>Heart failure</option>
+        <option>Valvular</option>
+      </select>
+      <select id="fTier" aria-label="Filter by risk tier">
+        <option value="">All risk tiers</option>
+        <option>High</option><option>Medium</option><option>Watch</option>
+      </select>
+      <select id="fStatus" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        <option>New</option><option>In review</option><option>Approved</option><option>Dismissed</option>
+      </select>
+      <select id="sortBy" aria-label="Sort">
+        <option value="priority">Sort: Priority (default)</option>
+        <option value="event">Sort: Last event, newest</option>
+        <option value="name">Sort: Patient name A–Z</option>
+      </select>
+      <span class="count" id="rowcount"></span>
+    </div>
+
+    <div class="tablecard">
+      <table aria-label="Cardiology census">
+        <thead><tr>
+          <th>Priority</th><th>Patient</th><th>Condition area</th><th>Care opportunity</th>
+          <th>Guideline basis</th><th>Last relevant event</th><th>Status</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- ============ drawer ============ -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Patient detail">
+  <button class="dclose" id="dclose" aria-label="Close panel">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
+  <div class="drawer-scroll" id="drawerBody"></div>
+  <div class="actions" id="drawerActions"></div>
+</aside>
+
+<!-- ============ source modal ============ -->
+<div class="modalwrap" id="modalwrap">
+  <div class="mscrim" id="mscrim"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+    <button class="dclose" id="mclose" aria-label="Close source view">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h4 id="mtitle"></h4>
+    <div class="msub" id="msub"></div>
+    <div class="docpage" id="mdoc"></div>
+    <div class="mfoot" id="mfoot"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<footer class="demofoot"><b>Demo mockup with synthetic data only.</b> Not a Qualified Health product. Built by Tribe AI for illustration.</footer>
+
+<script>
+"use strict";
+/* ============================================================
+   Synthetic census data — all names, MRNs, dates, and clinical
+   details are fictional. 16 patients: 10 HF, 6 valvular.
+   ============================================================ */
+/* Institution-adopted guideline criteria — generic mock excerpts; each
+   recommendation in the therapy table links to the passage it is based on. */
+const GUIDELINES = {
+"bb-init":{title:"Beta-blocker therapy in HFrEF", lib:"HF · Guideline-directed medical therapy",
+  strength:"Strong recommendation · randomized-trial evidence",
+  before:"In patients with heart failure with reduced ejection fraction, foundational medical therapy should be established unless contraindicated. ",
+  quote:"In patients with HFrEF (LVEF ≤ 40%), an evidence-based beta-blocker is recommended for all patients without contraindication, to reduce mortality and hospitalization.",
+  after:" Initiate at low dose and uptitrate toward the target dose used in clinical trials as heart rate and blood pressure allow."},
+"raasi-target":{title:"ACE inhibitor / ARB / ARNI dosing in HFrEF", lib:"HF · Guideline-directed medical therapy",
+  strength:"Strong recommendation · randomized-trial evidence",
+  before:"Renin-angiotensin system inhibition is a foundational pillar of therapy for HFrEF. ",
+  quote:"ACE inhibitors, ARBs, or ARNI should be titrated to the maximally tolerated evidence-based target dose; sustained sub-target dosing is associated with worse outcomes.",
+  after:" Blood pressure, renal function, and potassium should be reviewed at each titration step."},
+"gdmt-titration":{title:"Dose optimization of guideline-directed medical therapy", lib:"HF · Guideline-directed medical therapy",
+  strength:"Strong recommendation · consistent trial and registry evidence",
+  before:"Initiation of therapy alone is not sufficient; dose matters. ",
+  quote:"GDMT doses should be reassessed at every encounter and uptitrated toward target doses as blood pressure, heart rate, renal function, and potassium allow.",
+  after:" Documented intolerance, hypotension, or bradycardia are appropriate reasons to remain below target and should be recorded."},
+"sglt2i":{title:"SGLT2 inhibitors in HFrEF", lib:"HF · Guideline-directed medical therapy",
+  strength:"Strong recommendation · randomized-trial evidence",
+  before:"SGLT2 inhibition benefits patients with HFrEF with or without diabetes. ",
+  quote:"In patients with symptomatic chronic HFrEF, an SGLT2 inhibitor is recommended to reduce hospitalization for heart failure and cardiovascular mortality, irrespective of the presence of type 2 diabetes.",
+  after:" In patients who also have type 2 diabetes, the glycemic benefit is additive to the heart-failure indication."},
+"mra":{title:"Mineralocorticoid receptor antagonists in HFrEF", lib:"HF · Guideline-directed medical therapy",
+  strength:"Strong recommendation · randomized-trial evidence",
+  before:"MRA therapy reduces mortality in HFrEF when renal function and potassium permit. ",
+  quote:"An MRA is recommended in patients with HFrEF provided eGFR ≥ 30 mL/min/1.73 m² and serum potassium < 5.0 mmol/L, with laboratory surveillance after initiation.",
+  after:" Recheck potassium and renal function within 1–2 weeks of initiation and after any dose change."},
+"arni-switch":{title:"Substitution of ARNI for ACE inhibitor", lib:"HF · Guideline-directed medical therapy",
+  strength:"Strong recommendation · randomized-trial evidence",
+  before:"In suitable patients, ARNI is preferred over ACE inhibition alone. ",
+  quote:"In patients with chronic symptomatic HFrEF tolerating an ACE inhibitor or ARB, replacement by an ARNI is recommended to further reduce morbidity and mortality; allow a 36-hour washout after the last ACE-inhibitor dose.",
+  after:" Monitor blood pressure and renal function during the transition."},
+"diuretic":{title:"Diuretics for congestion", lib:"HF · Volume management",
+  strength:"Recommended · symptom and hospitalization benefit",
+  before:"Diuretics manage congestion but do not replace disease-modifying therapy. ",
+  quote:"Loop diuretics are recommended in patients with fluid retention to relieve congestion and maintain euvolemia, at the lowest effective dose.",
+  after:" Dose should be revisited whenever weight trend or examination suggests changing volume status."},
+"glycemic":{title:"Glycemic management in heart failure with T2DM", lib:"HF · Comorbidity management",
+  strength:"Recommended · multidisciplinary consensus",
+  before:"Diabetes and heart failure interact and should be managed together. ",
+  quote:"In patients with heart failure and type 2 diabetes above glycemic goal, co-management with diabetes services and preferential use of agents with cardiovascular benefit is recommended.",
+  after:" Agent selection should account for the heart-failure indication."},
+"as-intervention":{title:"Intervention for symptomatic severe aortic stenosis", lib:"Valvular · Aortic stenosis",
+  strength:"Strong recommendation · intervention indicated",
+  before:"Symptom onset changes the management of severe aortic stenosis. ",
+  quote:"In symptomatic patients with severe high-gradient aortic stenosis, aortic valve replacement is indicated; evaluation by a multidisciplinary valve team is recommended to determine the mode of intervention.",
+  after:" Untreated symptomatic severe AS carries substantial short-term risk; referral should not be deferred."},
+"as-surveillance":{title:"Surveillance of asymptomatic aortic stenosis", lib:"Valvular · Aortic stenosis",
+  strength:"Recommended · surveillance imaging",
+  before:"Aortic stenosis progresses at variable rates and requires scheduled reassessment. ",
+  quote:"In asymptomatic patients with moderate aortic stenosis, repeat transthoracic echocardiography every 1 to 2 years is recommended to assess progression.",
+  after:" Earlier imaging is appropriate if symptoms develop."},
+"mr-intervention":{title:"Intervention for severe primary mitral regurgitation", lib:"Valvular · Mitral regurgitation",
+  strength:"Strong recommendation · intervention indicated",
+  before:"Severe primary MR with symptoms warrants intervention while ventricular function is preserved. ",
+  quote:"In symptomatic patients with severe primary mitral regurgitation, intervention is recommended; referral to a comprehensive valve center for repair candidacy assessment is preferred when feasible.",
+  after:" Outcomes are best when repair occurs before LV dilation or dysfunction develops."},
+"mr-surveillance":{title:"Surveillance of chronic mitral regurgitation", lib:"Valvular · Mitral regurgitation",
+  strength:"Recommended · surveillance imaging",
+  before:"Progression of MR is monitored with scheduled echocardiography. ",
+  quote:"In patients with moderate-to-severe mitral regurgitation, surveillance transthoracic echocardiography every 6 to 12 months is recommended to monitor ventricular size and function.",
+  after:" Missed surveillance windows should prompt outreach and rescheduling."},
+"ar-surveillance":{title:"Surveillance of chronic aortic regurgitation", lib:"Valvular · Aortic regurgitation",
+  strength:"Reasonable · surveillance imaging",
+  before:"Chronic AR is followed for changes in ventricular size and function. ",
+  quote:"In asymptomatic patients with moderate aortic regurgitation and normal ventricular size, repeat echocardiography every 12 to 24 months is reasonable.",
+  after:" Symptom development at any point warrants earlier reassessment."},
+"tr-followup":{title:"Severe tricuspid regurgitation with RV dysfunction", lib:"Valvular · Tricuspid regurgitation",
+  strength:"Recommended · structured follow-up",
+  before:"Severe TR with right-ventricular involvement is frequently under-followed. ",
+  quote:"Patients with severe tricuspid regurgitation and right-ventricular dilation or dysfunction should receive regular cardiology follow-up to stage the lesion, manage volume status, and assess candidacy for intervention.",
+  after:" Rising natriuretic peptides or worsening RV function should accelerate evaluation."},
+"valve-followup":{title:"Symptom surveillance in valvular heart disease", lib:"Valvular · General principles",
+  strength:"Recommended · clinical assessment",
+  before:"Symptom status drives timing of intervention in valvular disease. ",
+  quote:"Structured symptom assessment at each visit is recommended in patients with valvular heart disease, as symptom onset changes management.",
+  after:" Patient-reported functional decline should be documented and acted upon."},
+"hf-surveillance":{title:"Reassessment of ventricular function", lib:"HF · Imaging and reassessment",
+  strength:"Recommended · reassessment imaging",
+  before:"LVEF is reassessed to guide therapy decisions. ",
+  quote:"Repeat assessment of LVEF is recommended after an interval of guideline-directed therapy, or at defined surveillance intervals following myocardial infarction, to guide therapy decisions.",
+  after:" Recovery or decline in EF both change the therapy plan."},
+"volume":{title:"Volume surveillance and diuretic adjustment", lib:"HF · Volume management",
+  strength:"Recommended · early-intervention evidence",
+  before:"Weight trend is an early signal of decompensation. ",
+  quote:"A sustained weight gain of ≥ 2–3 kg over days to weeks should prompt review of diuretic dosing and volume status before decompensation occurs.",
+  after:" Remote-monitoring trends meeting this threshold warrant clinician review."},
+"care-continuity":{title:"Continuity of care after missed encounters", lib:"Care processes · Follow-up",
+  strength:"Recommended · care-process criterion",
+  before:"Lapses in follow-up are a common, addressable failure mode. ",
+  quote:"Patients with valvular disease or heart failure who miss surveillance encounters should be actively re-engaged through outreach, as lapses in follow-up are associated with adverse outcomes.",
+  after:" Repeated cancellations should trigger a barrier assessment (transportation, access, cost)."},
+"lab-monitoring":{title:"Laboratory surveillance after RAAS or MRA changes", lib:"HF · Safety monitoring",
+  strength:"Recommended · safety criterion",
+  before:"Therapy changes require short-interval laboratory follow-up. ",
+  quote:"Renal function and potassium should be reassessed within 1 to 2 weeks of initiating or uptitrating ACE inhibitors, ARBs, ARNI, or MRA therapy.",
+  after:" Results outside safety thresholds should prompt dose adjustment."},
+"med-rec":{title:"External medication reconciliation", lib:"Care processes · Medication safety",
+  strength:"Recommended · safety criterion",
+  before:"Medication gaps identified from a single record may reflect incomplete data rather than a true care gap. ",
+  quote:"Medication lists should be reconciled against external pharmacy and health-system records before therapy changes are made, to avoid duplication or erroneous gap detection.",
+  after:" Confirmed external prescriptions should be documented in the local record."}
+};
+
+const PATIENTS = [
+{
+  id:"p1", rank:1, tier:"High", name:"Margaret Okafor", age:71, sex:"F", mrn:"QH-284771",
+  area:"Heart failure", status:"New", careTeam:"HF Clinic — Team B (Dr. Reyes)",
+  opportunity:"HFrEF, EF 28%: no beta-blocker on active med list",
+  guideline:"GDMT · beta-blocker", lastEvent:{type:"Echo", date:"2026-05-14"},
+  rule:{id:"CG-HF-04", text:"EF ≤ 40% on most recent echo AND no beta-blocker on active medication list AND no documented contraindication."},
+  synthesis:"Ms. Okafor is a 71-year-old woman with heart failure with reduced ejection fraction — LVEF 28% with a moderately dilated left ventricle on her May 2026 echo. Her active medications are lisinopril 10 mg and furosemide 40 mg; there is no beta-blocker on the list and no contraindication to beta-blockade documented anywhere in her chart. She was discharged in March 2026 after an admission for volume overload with a recommendation for cardiology follow-up in two weeks, but no appointment was ever scheduled. A social-work note from that admission lists transportation as a barrier to care. Initiating an evidence-based beta-blocker and re-establishing cardiology follow-up are the immediate opportunities.",
+  evidence:[
+    {fact:"LVEF 28% on most recent echo", quote:"LVEF estimated at 28%, moderately dilated LV with global hypokinesis.", source:"Echocardiogram report", date:"2026-05-14"},
+    {fact:"No beta-blocker on active medication list", quote:"Active medications: lisinopril 10 mg daily; furosemide 40 mg daily.", source:"Active medication list", date:"2026-06-30"},
+    {fact:"Recommended follow-up was never scheduled", quote:"Stable for discharge. Recommend cardiology follow-up in 2 weeks.", source:"Discharge summary", date:"2026-03-02"},
+    {fact:"No documented contraindication to beta-blockade", quote:"Allergies/intolerances: NKDA. No adverse drug reactions on file.", source:"Allergy & intolerance record", date:"2026-06-30"}
+  ],
+  therapy:{
+    current:["Lisinopril 10 mg daily","Furosemide 40 mg daily",["No beta-blocker",true],["No SGLT2 inhibitor",true]],
+    recommended:[{t:"ACE inhibitor / ARB / ARNI at target dose",g:"raasi-target"},{t:"Evidence-based beta-blocker",g:"bb-init"},{t:"SGLT2 inhibitor for HFrEF",g:"sglt2i"},{t:"Loop diuretic as needed for congestion",g:"diuretic"}]
+  }
+},
+{
+  id:"p2", rank:2, tier:"High", name:"Raymond Delacroix", age:64, sex:"M", mrn:"QH-193028",
+  area:"Valvular", status:"New", careTeam:"Structural Heart — Valve Team",
+  opportunity:"Severe aortic stenosis on echo, no valve-team referral on file",
+  guideline:"Valve · AS intervention", lastEvent:{type:"Clinic note", date:"2026-04-30"},
+  rule:{id:"CG-VAL-02", text:"Severe aortic stenosis on most recent echo (AVA < 1.0 cm² OR peak velocity ≥ 4.0 m/s) AND symptoms documented AND no valve-team referral order on file."},
+  synthesis:"Mr. Delacroix is a 64-year-old man whose April 2026 echo shows severe aortic stenosis — aortic valve area 0.9 cm² with a peak velocity of 4.3 m/s. At his cardiology visit the following week he reported exertional dyspnea, making this symptomatic severe AS. The note states an intention to discuss TAVR candidacy, but no referral order to the valve team was ever placed. Symptomatic severe aortic stenosis carries substantial untreated risk, and the missing referral is the specific gap this flag surfaces.",
+  evidence:[
+    {fact:"Severe aortic stenosis on echo", quote:"Aortic valve area 0.9 cm², peak velocity 4.3 m/s, consistent with severe AS.", source:"Echocardiogram report", date:"2026-04-22"},
+    {fact:"Intent documented, but no referral order found", quote:"Will discuss TAVR candidacy with structural heart team at next visit.", source:"Cardiology clinic note", date:"2026-04-30"},
+    {fact:"Symptomatic: exertional dyspnea", quote:"Patient reports dyspnea on exertion, notably climbing one flight of stairs.", source:"Cardiology clinic note", date:"2026-04-30"}
+  ],
+  therapy:{
+    current:["Amlodipine 5 mg daily","Atorvastatin 40 mg daily",["No valve-team referral on file",true]],
+    recommended:[{t:"Structural heart / valve-team evaluation for symptomatic severe AS",g:"as-intervention"},{t:"Symptom-guided follow-up pending intervention decision",g:"valve-followup"}]
+  }
+},
+{
+  id:"p3", rank:3, tier:"High", name:"Linh Truong", age:58, sex:"F", mrn:"QH-407615",
+  area:"Heart failure", status:"New", careTeam:"HF Clinic — Team A",
+  opportunity:"HFrEF with diabetes: no SGLT2 inhibitor on med list",
+  guideline:"GDMT · SGLT2i", lastEvent:{type:"Lab", date:"2026-05-30"},
+  rule:{id:"CG-HF-07", text:"EF ≤ 40% AND type 2 diabetes on problem list AND no SGLT2 inhibitor on active medication list AND eGFR above threshold."},
+  synthesis:"Ms. Truong is a 58-year-old woman with HFrEF (LVEF 33% in February 2026) and type 2 diabetes, with an A1c of 8.1% in May. She is already on two pillars of guideline-directed therapy — metoprolol succinate and sacubitril/valsartan — but has no SGLT2 inhibitor on her medication list despite dual heart-failure and glycemic indications. No renal or other contraindication is documented. Adding an SGLT2 inhibitor is the single highest-yield optimization available for her.",
+  evidence:[
+    {fact:"LVEF 33% on most recent echo", quote:"LVEF 33% by biplane method; mild MR.", source:"Echocardiogram report", date:"2026-02-11"},
+    {fact:"Type 2 diabetes on problem list", quote:"Active problems: type 2 diabetes mellitus; heart failure with reduced EF.", source:"Problem list", date:"2026-06-30"},
+    {fact:"No SGLT2 inhibitor on active med list", quote:"Active: metoprolol succinate 50 mg daily; sacubitril/valsartan 24/26 mg BID.", source:"Active medication list", date:"2026-06-30"},
+    {fact:"A1c above goal", quote:"Hemoglobin A1c: 8.1% (ref < 7.0%).", source:"Laboratory result", date:"2026-05-30"}
+  ],
+  therapy:{
+    current:["Metoprolol succinate 50 mg daily","Sacubitril/valsartan 24/26 mg BID","Metformin 1000 mg BID",["No SGLT2 inhibitor",true]],
+    recommended:[{t:"Continue beta-blocker and ARNI; titrate to target",g:"gdmt-titration"},{t:"SGLT2 inhibitor for HFrEF with T2DM",g:"sglt2i"},{t:"Endocrine co-management for A1c above goal",g:"glycemic"}]
+  }
+},
+{
+  id:"p4", rank:4, tier:"High", name:"Anaya Krishnamurthy", age:62, sex:"F", mrn:"QH-731948",
+  area:"Valvular", status:"In review", careTeam:"Structural Heart — Valve Team",
+  opportunity:"Severe symptomatic mitral regurgitation: no structural heart referral",
+  guideline:"Valve · MR intervention", lastEvent:{type:"Clinic note", date:"2026-05-20"},
+  rule:{id:"CG-VAL-03", text:"Severe primary mitral regurgitation on most recent echo AND symptoms documented AND no structural heart referral order on file."},
+  synthesis:"Ms. Krishnamurthy is a 62-year-old woman with severe primary mitral regurgitation from a flail P2 segment, identified on her May 2026 echo with preserved LV function. Her clinic note from later that month documents worsening exertional fatigue. Despite the combination of severe primary MR and symptoms, no structural heart referral appears in the order history. Timely evaluation for repair is the opportunity; her preserved LVEF favors intervention before ventricular remodeling occurs.",
+  evidence:[
+    {fact:"Severe primary MR on echo", quote:"Severe mitral regurgitation, flail P2 segment; LVEF 58%.", source:"Echocardiogram report", date:"2026-05-02"},
+    {fact:"Symptomatic: worsening fatigue", quote:"Reports worsening exertional fatigue over the past two months.", source:"Cardiology clinic note", date:"2026-05-20"},
+    {fact:"No structural heart referral in order history", quote:"Orders this encounter: BMP, BNP. (No referral orders placed.)", source:"Order history", date:"2026-05-20"}
+  ],
+  therapy:{
+    current:["Losartan 50 mg daily",["No structural heart referral on file",true]],
+    recommended:[{t:"Structural heart evaluation for severe symptomatic primary MR",g:"mr-intervention"},{t:"Surgical or transcatheter repair candidacy assessment",g:"mr-intervention"}]
+  }
+},
+{
+  id:"p5", rank:5, tier:"Medium", name:"Douglas Whitfield", age:77, sex:"M", mrn:"QH-355290",
+  area:"Heart failure", status:"New", careTeam:"HF Clinic — Team B (Dr. Reyes)",
+  opportunity:"ACE inhibitor at sub-target dose for 14 months, no uptitration",
+  guideline:"GDMT · ACEi titration", lastEvent:{type:"Vitals", date:"2026-06-18"},
+  rule:{id:"CG-HF-11", text:"HFrEF on ACE inhibitor below 50% of target dose for ≥ 12 months AND systolic BP ≥ 110 at last 3 encounters AND no documented intolerance."},
+  synthesis:"Mr. Whitfield is a 77-year-old man with chronic HFrEF whose lisinopril has remained at 5 mg — well below target — since April 2025, fourteen months without a dose change. His blood pressure has been 132/78 or similar at each of his last three visits, leaving clear headroom for uptitration, and no intolerance or renal limitation is documented. Dose optimization of his ACE inhibitor is the flagged opportunity.",
+  evidence:[
+    {fact:"ACE inhibitor unchanged at sub-target dose for 14 months", quote:"Lisinopril 5 mg daily — started 2025-04, no subsequent dose change.", source:"Medication history", date:"2026-06-30"},
+    {fact:"Blood pressure headroom at last 3 visits", quote:"BP 132/78. Prior: 130/76 (Apr), 134/80 (Feb).", source:"Vitals flowsheet", date:"2026-06-18"},
+    {fact:"No documented intolerance", quote:"No adverse drug reactions or intolerances on file for ACE inhibitors.", source:"Allergy & intolerance record", date:"2026-06-30"}
+  ],
+  therapy:{
+    current:["Lisinopril 5 mg daily (sub-target)","Carvedilol 25 mg BID","Furosemide 20 mg daily"],
+    recommended:[{t:"Uptitrate ACE inhibitor toward target dose",g:"gdmt-titration"},{t:"Continue beta-blocker at current dose",g:"bb-init"},{t:"Renal function and potassium check after titration",g:"lab-monitoring"}]
+  }
+},
+{
+  id:"p6", rank:6, tier:"Medium", name:"Rosa Maldonado", age:69, sex:"F", mrn:"QH-521837",
+  area:"Valvular", status:"New", careTeam:"Cardiology — General",
+  opportunity:"Moderate-to-severe mitral regurgitation, surveillance echo 9 months overdue",
+  guideline:"Valve · MR surveillance", lastEvent:{type:"Echo", date:"2025-04-03"},
+  rule:{id:"CG-VAL-05", text:"Moderate-to-severe MR on most recent echo AND recommended surveillance interval exceeded by > 6 months AND no subsequent echo on file."},
+  synthesis:"Ms. Maldonado is a 69-year-old woman with moderate-to-severe mitral regurgitation last imaged in April 2025, when the reading cardiologist recommended a repeat transthoracic echo in 12 months. No follow-up echo appears anywhere in her record, putting surveillance roughly nine months overdue. She cancelled cardiology appointments in January and March 2026, which is likely why the study was never ordered. Re-establishing contact and completing the surveillance echo is the opportunity.",
+  evidence:[
+    {fact:"Moderate-to-severe MR with a stated surveillance plan", quote:"Moderate-to-severe MR. Recommend repeat TTE in 12 months.", source:"Echocardiogram report", date:"2025-04-03"},
+    {fact:"No subsequent echo on file", quote:"Most recent transthoracic echocardiogram: 2025-04-03.", source:"Imaging index", date:"2026-06-30"},
+    {fact:"Two cancelled cardiology appointments", quote:"Cancelled by patient: 2026-01-15 (cardiology f/u); 2026-03-20 (cardiology f/u).", source:"Scheduling record", date:"2026-03-20"}
+  ],
+  therapy:{
+    current:["Amlodipine 10 mg daily","Hydrochlorothiazide 25 mg daily",["Surveillance echo overdue by ~9 months",true]],
+    recommended:[{t:"Repeat TTE for MR surveillance",g:"mr-surveillance"},{t:"Re-establish cardiology follow-up; outreach given cancellations",g:"care-continuity"}]
+  }
+},
+{
+  id:"p7", rank:7, tier:"Medium", name:"Priya Ramachandran", age:60, sex:"F", mrn:"QH-842015",
+  area:"Heart failure", status:"In review", careTeam:"HF Clinic — Team A",
+  opportunity:"Beta-blocker at sub-target dose for 12 months; resting HR 78, no uptitration",
+  guideline:"GDMT · BB titration", lastEvent:{type:"Vitals", date:"2026-06-25"},
+  rule:{id:"CG-HF-12", text:"HFrEF on beta-blocker below 50% of target dose for ≥ 12 months AND resting HR ≥ 70 AND no documented intolerance."},
+  synthesis:"Ms. Ramachandran is a 60-year-old woman with HFrEF whose metoprolol succinate has stayed at 25 mg for a year. Her resting heart rate of 78 and stable blood pressure indicate room to uptitrate, and no intolerance is recorded. Beta-blocker dose optimization is the flagged opportunity.",
+  evidence:[
+    {fact:"Beta-blocker at sub-target dose for 12 months", quote:"Metoprolol succinate 25 mg daily — no dose change since 2025-06.", source:"Medication history", date:"2026-06-30"},
+    {fact:"Resting HR with titration headroom", quote:"HR 78 regular, BP 124/76.", source:"Vitals flowsheet", date:"2026-06-25"},
+    {fact:"No documented intolerance", quote:"No beta-blocker intolerance or adverse reaction on file.", source:"Allergy & intolerance record", date:"2026-06-30"}
+  ],
+  therapy:{
+    current:["Metoprolol succinate 25 mg daily (sub-target)","Sacubitril/valsartan 49/51 mg BID","Empagliflozin 10 mg daily"],
+    recommended:[{t:"Uptitrate beta-blocker toward target dose",g:"gdmt-titration"},{t:"Continue ARNI and SGLT2 inhibitor",g:"raasi-target"}]
+  }
+},
+{
+  id:"p8", rank:8, tier:"Medium", name:"Everett Lindqvist", age:73, sex:"M", mrn:"QH-509263",
+  area:"Heart failure", status:"New", careTeam:"HF Clinic — Team B (Dr. Reyes)",
+  opportunity:"HFrEF, EF 35%: no mineralocorticoid receptor antagonist despite eligibility",
+  guideline:"GDMT · MRA", lastEvent:{type:"Lab", date:"2026-06-02"},
+  rule:{id:"CG-HF-09", text:"EF ≤ 40% AND no MRA on active medication list AND potassium < 5.0 AND eGFR ≥ 30."},
+  synthesis:"Mr. Lindqvist is a 73-year-old man with HFrEF (LVEF 35% in January 2026) on a beta-blocker and ACE inhibitor but no mineralocorticoid receptor antagonist. His June labs — potassium 4.1 and eGFR 62 — put him comfortably within eligibility for MRA initiation. Adding an MRA completes another pillar of guideline-directed therapy for him.",
+  evidence:[
+    {fact:"LVEF 35% on most recent echo", quote:"LVEF 35%; mild global hypokinesis.", source:"Echocardiogram report", date:"2026-01-19"},
+    {fact:"Renal function and potassium within MRA eligibility", quote:"Potassium 4.1 mmol/L; eGFR 62 mL/min/1.73m².", source:"Laboratory result", date:"2026-06-02"},
+    {fact:"No MRA on active med list", quote:"Active: carvedilol 12.5 mg BID; lisinopril 20 mg daily; furosemide 40 mg daily.", source:"Active medication list", date:"2026-06-30"}
+  ],
+  therapy:{
+    current:["Carvedilol 12.5 mg BID","Lisinopril 20 mg daily","Furosemide 40 mg daily",["No MRA",true]],
+    recommended:[{t:"Add mineralocorticoid receptor antagonist",g:"mra"},{t:"Potassium and renal recheck 1–2 weeks after initiation",g:"lab-monitoring"}]
+  }
+},
+{
+  id:"p9", rank:9, tier:"Medium", name:"Konstantin Zhuravlev", age:68, sex:"M", mrn:"QH-376490",
+  area:"Heart failure", status:"Approved", careTeam:"HF Clinic — Team A",
+  opportunity:"HFrEF on ACE inhibitor: eligible for switch to ARNI",
+  guideline:"GDMT · ARNI", lastEvent:{type:"Echo", date:"2026-03-27"},
+  rule:{id:"CG-HF-08", text:"EF ≤ 40% AND tolerating ACE inhibitor AND no ARNI trial documented AND systolic BP ≥ 100."},
+  synthesis:"Mr. Zhuravlev is a 68-year-old man with HFrEF (LVEF 30% in March 2026) who has tolerated enalapril well with a systolic pressure of 118. No trial of sacubitril/valsartan appears in his history, making him a candidate for the guideline-preferred switch from ACE inhibitor to ARNI. This flag was reviewed and routed to a medication optimization consult on July 8.",
+  evidence:[
+    {fact:"LVEF 30% on most recent echo", quote:"LVEF 30% by biplane method; moderately dilated LV.", source:"Echocardiogram report", date:"2026-03-27"},
+    {fact:"Tolerating ACE inhibitor with BP headroom", quote:"Enalapril 10 mg BID, well tolerated. BP 118/74.", source:"Cardiology clinic note", date:"2026-05-15"},
+    {fact:"No prior ARNI trial documented", quote:"Medication history: no record of sacubitril/valsartan.", source:"Medication history", date:"2026-06-30"}
+  ],
+  therapy:{
+    current:["Enalapril 10 mg BID","Bisoprolol 5 mg daily","Spironolactone 25 mg daily"],
+    recommended:[{t:"Switch ACE inhibitor to ARNI (36-hour washout)",g:"arni-switch"},{t:"Continue beta-blocker and MRA",g:"gdmt-titration"}]
+  },
+  decision:{kind:"Approved", detail:"Routed to Medication optimization consult", by:"Dr. A. Reyes", date:"2026-07-08", audit:"AUD-2026-0708-114522-QH376490"}
+},
+{
+  id:"p10", rank:10, tier:"Medium", name:"Beatriz Furtado", age:74, sex:"F", mrn:"QH-615832",
+  area:"Valvular", status:"New", careTeam:"Cardiology — General",
+  opportunity:"Moderate aortic stenosis: surveillance echo interval exceeded (26 months)",
+  guideline:"Valve · AS surveillance", lastEvent:{type:"Echo", date:"2024-05-10"},
+  rule:{id:"CG-VAL-07", text:"Moderate AS on most recent echo AND > 24 months since last echo AND no subsequent echo ordered."},
+  synthesis:"Ms. Furtado is a 74-year-old woman with moderate aortic stenosis last imaged in May 2024, when a repeat study within one to two years was recommended. Twenty-six months have now passed with no follow-up echo ordered. She remains asymptomatic per her primary care notes, but moderate AS can progress meaningfully over this interval; a surveillance echo is the opportunity.",
+  evidence:[
+    {fact:"Moderate AS with a stated surveillance plan", quote:"Moderate AS, AVA 1.2 cm². Recommend repeat TTE in 1–2 years.", source:"Echocardiogram report", date:"2024-05-10"},
+    {fact:"No subsequent echo on file", quote:"Most recent transthoracic echocardiogram: 2024-05-10.", source:"Imaging index", date:"2026-06-30"},
+    {fact:"Asymptomatic per primary care", quote:"No chest pain, syncope, or exertional dyspnea reported.", source:"Primary care note", date:"2026-04-17"}
+  ],
+  therapy:{
+    current:["Atorvastatin 20 mg daily",["Surveillance echo overdue (26 months since last)",true]],
+    recommended:[{t:"Repeat TTE for moderate AS surveillance",g:"as-surveillance"},{t:"Symptom check at next visit",g:"valve-followup"}]
+  }
+},
+{
+  id:"p11", rank:11, tier:"Medium", name:"Cedric Ashworth", age:79, sex:"M", mrn:"QH-928471",
+  area:"Valvular", status:"New", careTeam:"Cardiology — General",
+  opportunity:"Severe tricuspid regurgitation with RV dilation: no cardiology follow-up plan",
+  guideline:"Valve · TR follow-up", lastEvent:{type:"Lab", date:"2026-06-10"},
+  rule:{id:"CG-VAL-09", text:"Severe TR with RV dilation on most recent echo AND no cardiology encounter or order in the following 90 days."},
+  synthesis:"Mr. Ashworth is a 79-year-old man whose February 2026 echo showed severe tricuspid regurgitation with a dilated, hypocontractile right ventricle. He has not been seen in cardiology since September 2025 and no follow-up plan exists in the record. A rising BNP in June suggests the lesion may be consequential. Establishing cardiology follow-up to stage the TR and RV function is the opportunity.",
+  evidence:[
+    {fact:"Severe TR with RV dilation on echo", quote:"Severe tricuspid regurgitation; dilated RV with reduced systolic function.", source:"Echocardiogram report", date:"2026-02-25"},
+    {fact:"No cardiology encounter since 2025-09", quote:"Last cardiology encounter: 2025-09-12.", source:"Encounter history", date:"2026-06-30"},
+    {fact:"Elevated BNP", quote:"BNP 410 pg/mL (ref < 100).", source:"Laboratory result", date:"2026-06-10"}
+  ],
+  therapy:{
+    current:["Furosemide 20 mg daily","Apixaban 5 mg BID (AF)",["No cardiology follow-up plan on file",true]],
+    recommended:[{t:"Cardiology follow-up to stage severe TR and RV function",g:"tr-followup"},{t:"Volume management review",g:"volume"}]
+  }
+},
+{
+  id:"p12", rank:12, tier:"Watch", name:"Yusuf Al-Amin", age:59, sex:"M", mrn:"QH-204387",
+  area:"Heart failure", status:"New", careTeam:"HF Clinic — Team A",
+  opportunity:"EF 40% on ACE inhibitor only: GDMT expansion candidate",
+  guideline:"GDMT · expansion", lastEvent:{type:"Echo", date:"2026-04-08"},
+  rule:{id:"CG-HF-05", text:"EF ≤ 40% AND fewer than 2 GDMT pillar classes on active medication list."},
+  synthesis:"Mr. Al-Amin is a 59-year-old man with an ejection fraction of 40% on his April 2026 echo, managed with ramipril alone. At the HFrEF boundary with only one pillar of guideline-directed therapy on board, he is a candidate for staged expansion — beta-blocker first, then reassessment. His blood pressure of 128/80 provides room to add therapy.",
+  evidence:[
+    {fact:"LVEF 40% on most recent echo", quote:"LVEF 40%; borderline reduced systolic function.", source:"Echocardiogram report", date:"2026-04-08"},
+    {fact:"Single GDMT class on med list", quote:"Active: ramipril 5 mg daily.", source:"Active medication list", date:"2026-06-30"},
+    {fact:"BP headroom for additional therapy", quote:"BP 128/80, HR 74.", source:"Vitals flowsheet", date:"2026-05-28"}
+  ],
+  therapy:{
+    current:["Ramipril 5 mg daily",["No beta-blocker",true]],
+    recommended:[{t:"Add evidence-based beta-blocker",g:"bb-init"},{t:"Reassess EF and symptoms after titration",g:"hf-surveillance"}]
+  }
+},
+{
+  id:"p13", rank:13, tier:"Watch", name:"Ingrid Solberg", age:70, sex:"F", mrn:"QH-483720",
+  area:"Heart failure", status:"New", careTeam:"HF Clinic — Team B (Dr. Reyes)",
+  opportunity:"HFpEF: 4.2 kg weight gain over 6 weeks on remote monitoring; diuretic review",
+  guideline:"HF · volume management", lastEvent:{type:"Remote monitoring", date:"2026-06-28"},
+  rule:{id:"CG-HF-15", text:"HF diagnosis AND remote-monitoring weight gain ≥ 3 kg over ≤ 8 weeks AND no diuretic adjustment in the interval."},
+  synthesis:"Ms. Solberg is a 70-year-old woman with HFpEF enrolled in remote weight monitoring, which shows a 4.2 kg gain over the past six weeks with no corresponding diuretic adjustment. Her most recent clinic note mentions mild ankle swelling. The trend suggests early volume accumulation that a diuretic review could address before it becomes an admission.",
+  evidence:[
+    {fact:"4.2 kg weight gain over 6 weeks", quote:"Weight 78.4 kg, up 4.2 kg from 74.2 kg on 2026-05-15.", source:"Remote monitoring summary", date:"2026-06-28"},
+    {fact:"Low-dose diuretic unchanged", quote:"Active: furosemide 20 mg daily — unchanged since 2025-11.", source:"Active medication list", date:"2026-06-30"},
+    {fact:"Early congestion signs", quote:"Mild bilateral ankle edema noted.", source:"Clinic note", date:"2026-06-20"}
+  ],
+  therapy:{
+    current:["Furosemide 20 mg daily","Losartan 100 mg daily"],
+    recommended:[{t:"Diuretic review given weight trend",g:"volume"},{t:"Continue remote monitoring; symptom check",g:"volume"}]
+  }
+},
+{
+  id:"p14", rank:14, tier:"Watch", name:"Alton Greenidge", age:65, sex:"M", mrn:"QH-557201",
+  area:"Heart failure", status:"New", careTeam:"Cardiology — General",
+  opportunity:"EF 42% post-MI (2025): 12-month surveillance echo now due",
+  guideline:"HF · surveillance", lastEvent:{type:"Echo", date:"2025-07-30"},
+  rule:{id:"CG-HF-16", text:"Post-MI with EF 40–49% AND recommended surveillance echo interval reached AND no echo ordered."},
+  synthesis:"Mr. Greenidge is a 65-year-old man with mildly reduced EF (42%) and apical hypokinesis after his 2025 myocardial infarction. His discharge plan called for a repeat echo at twelve months, which is now due, and none has been ordered. He is appropriately on a beta-blocker; the flag is purely the surveillance gap.",
+  evidence:[
+    {fact:"EF 42% with apical hypokinesis post-MI", quote:"LVEF 42%; apical hypokinesis consistent with prior infarct.", source:"Echocardiogram report", date:"2025-07-30"},
+    {fact:"12-month surveillance echo recommended", quote:"Recommend repeat echo in 12 months to reassess LV function.", source:"Discharge summary", date:"2025-07-31"},
+    {fact:"Beta-blocker on board", quote:"Active: carvedilol 12.5 mg BID; aspirin 81 mg; atorvastatin 80 mg.", source:"Active medication list", date:"2026-06-30"}
+  ],
+  therapy:{
+    current:["Carvedilol 12.5 mg BID","Aspirin 81 mg daily","Atorvastatin 80 mg daily"],
+    recommended:[{t:"Order 12-month surveillance echo",g:"hf-surveillance"},{t:"Reassess GDMT needs based on result",g:"gdmt-titration"}]
+  }
+},
+{
+  id:"p15", rank:15, tier:"Watch", name:"Fumiko Tanabe", age:72, sex:"F", mrn:"QH-869305",
+  area:"Valvular", status:"New", careTeam:"Cardiology — General",
+  opportunity:"Moderate aortic regurgitation: surveillance interval approaching, no TTE ordered",
+  guideline:"Valve · AR surveillance", lastEvent:{type:"Echo", date:"2025-08-14"},
+  rule:{id:"CG-VAL-11", text:"Moderate AR on most recent echo AND recommended surveillance interval reached within 60 days AND no TTE ordered."},
+  synthesis:"Ms. Tanabe is a 72-year-old woman with moderate aortic regurgitation and normal LV size, last imaged in August 2025 with a recommendation for repeat imaging at twelve months. That interval arrives next month and no order has been placed. She remains asymptomatic; this is a low-urgency scheduling nudge to keep surveillance on track.",
+  evidence:[
+    {fact:"Moderate AR with surveillance plan", quote:"Moderate AR; LV size and function normal. Recommend TTE in 12 months.", source:"Echocardiogram report", date:"2025-08-14"},
+    {fact:"No follow-up TTE ordered", quote:"No pending echocardiography orders.", source:"Order history", date:"2026-06-30"},
+    {fact:"Asymptomatic", quote:"Denies dyspnea, chest pain, or palpitations.", source:"Clinic note", date:"2026-05-06"}
+  ],
+  therapy:{
+    current:["Amlodipine 5 mg daily"],
+    recommended:[{t:"Schedule 12-month surveillance TTE",g:"ar-surveillance"},{t:"Symptom check at next visit",g:"valve-followup"}]
+  }
+},
+{
+  id:"p16", rank:16, tier:"Watch", name:"Samuel Adeyemi", age:55, sex:"M", mrn:"QH-660154",
+  area:"Heart failure", status:"Dismissed", careTeam:"HF Clinic — Team B (Dr. Reyes)",
+  opportunity:"Flagged: EF 38%, no beta-blocker — dismissed: managed at outside VA clinic",
+  guideline:"GDMT · beta-blocker", lastEvent:{type:"Echo", date:"2026-01-08"},
+  rule:{id:"CG-HF-04", text:"EF ≤ 40% on most recent echo AND no beta-blocker on active medication list AND no documented contraindication."},
+  synthesis:"Mr. Adeyemi is a 55-year-old man with an EF of 38% and no beta-blocker on his UTMB medication list, which is why rule CG-HF-04 fired. On review, Dr. Reyes confirmed with the patient that a beta-blocker was prescribed at an outside VA clinic and is being taken — the gap is in record reconciliation, not in care. The flag was dismissed with that reason; the dismissal feeds back into screening so external-med reconciliation cases can be tuned.",
+  evidence:[
+    {fact:"LVEF 38% on most recent echo", quote:"LVEF 38%; mildly dilated LV.", source:"Echocardiogram report", date:"2026-01-08"},
+    {fact:"No beta-blocker on internal med list", quote:"Active: sacubitril/valsartan 24/26 mg BID; furosemide 20 mg daily.", source:"Active medication list", date:"2026-06-12"},
+    {fact:"External prescription confirmed by patient", quote:"Patient confirms taking metoprolol prescribed at VA clinic; will obtain records.", source:"Telephone encounter note", date:"2026-06-12"}
+  ],
+  therapy:{
+    current:["Sacubitril/valsartan 24/26 mg BID","Furosemide 20 mg daily","Metoprolol (external — VA clinic, per patient)"],
+    recommended:[{t:"Reconcile external VA medication record",g:"med-rec"},"No therapy change indicated"]
+  },
+  decision:{kind:"Dismissed", detail:"Already managed elsewhere — beta-blocker prescribed at outside VA clinic, confirmed by patient 2026-06-12", by:"Dr. A. Reyes", date:"2026-06-12", audit:"AUD-2026-0612-093814-QH660154"}
+}
+];
+
+/* ============================================================ state */
+let openFlags = 312;
+let selectedId = null;
+const $ = id => document.getElementById(id);
+
+const TIER_CLASS = {High:"high", Medium:"med", Watch:"watch"};
+const STATUS_CLASS = {"New":"status-new","In review":"status-rev","Approved":"status-app","Dismissed":"status-dis"};
+
+/* ============================================================ table */
+function visiblePatients(){
+  const q = $("q").value.trim().toLowerCase();
+  const area = $("fArea").value, tier = $("fTier").value, status = $("fStatus").value;
+  let rows = PATIENTS.filter(p =>
+    (!area || p.area === area) &&
+    (!tier || p.tier === tier) &&
+    (!status || p.status === status) &&
+    (!q || (p.name + " " + p.mrn + " " + p.opportunity).toLowerCase().includes(q))
+  );
+  const sort = $("sortBy").value;
+  if (sort === "name") rows.sort((a,b)=>a.name.localeCompare(b.name));
+  else if (sort === "event") rows.sort((a,b)=>b.lastEvent.date.localeCompare(a.lastEvent.date));
+  else rows.sort((a,b)=>a.rank-b.rank);
+  return rows;
+}
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+function renderTable(){
+  const rows = visiblePatients();
+  $("rowcount").textContent = "Showing " + rows.length + " of " + PATIENTS.length + " on this census · 312 flagged system-wide";
+  $("tbody").innerHTML = rows.map(p => `
+    <tr data-id="${p.id}" class="${p.id===selectedId?"selected":""}" tabindex="0" aria-label="Open ${esc(p.name)}">
+      <td class="rank"><span style="margin-right:8px">${p.rank}</span><span class="chip ${TIER_CLASS[p.tier]}">${p.tier}</span></td>
+      <td><div class="pname">${esc(p.name)}</div><div class="psub">${p.age}${p.sex} · ${p.mrn}</div></td>
+      <td>${p.area}</td>
+      <td class="opp">${esc(p.opportunity)}</td>
+      <td><span class="chip guide">${esc(p.guideline)}</span></td>
+      <td class="evt"><b>${esc(p.lastEvent.type)}</b> · ${p.lastEvent.date}</td>
+      <td><span class="chip ${STATUS_CLASS[p.status]}">${p.status}</span></td>
+    </tr>`).join("") ||
+    `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">No patients match the current filters.</td></tr>`;
+}
+
+/* ============================================================ drawer */
+function therapyRows(t){
+  const n = Math.max(t.current.length, t.recommended.length);
+  let out = "";
+  for (let i=0;i<n;i++){
+    const c = t.current[i], r = t.recommended[i];
+    const cHtml = c == null ? "" : (Array.isArray(c) ? `<span class="miss">${esc(c[0])}</span>` : esc(c));
+    let rHtml = "";
+    if (r != null){
+      if (typeof r === "object" && r.g){
+        rHtml = `<button class="gref" data-g="${esc(r.g)}" title="View the guideline passage this recommendation is based on">${esc(r.t)}<svg class="gicon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4h6a4 4 0 014 4v12a3 3 0 00-3-3H2zM22 4h-6a4 4 0 00-4 4v12a3 3 0 013-3h7z"/></svg></button>`;
+      } else {
+        rHtml = esc(typeof r === "object" ? r.t : r);
+      }
+    }
+    out += `<tr><td>${cHtml}</td><td>${rHtml}</td></tr>`;
+  }
+  return out;
+}
+
+function openDrawer(id){
+  const p = PATIENTS.find(x=>x.id===id);
+  if(!p) return;
+  selectedId = id;
+  renderTable();
+  $("drawerBody").innerHTML = `
+    <h2 class="dh-name">${esc(p.name)}</h2>
+    <div class="dh-sub">
+      <span>${p.age}${p.sex}</span><span>MRN ${p.mrn}</span><span>${p.area}</span>
+      <span>Care team: ${esc(p.careTeam)}</span>
+    </div>
+    <div class="dh-chips">
+      <span class="chip ${TIER_CLASS[p.tier]}">${p.tier} priority</span>
+      <span class="chip ${STATUS_CLASS[p.status]}" id="drawerStatusChip">${p.status}</span>
+      <span class="chip guide">${esc(p.guideline)}</span>
+    </div>
+
+    <section class="dsec">
+      <h3>Why this patient was flagged <span class="tag det">Deterministic rule · clinician-authored</span></h3>
+      <div class="rulebox"><span class="rid">Rule ${p.rule.id}:</span> ${esc(p.rule.text)}</div>
+    </section>
+
+    <section class="dsec">
+      <h3>AI clinical synthesis <span class="tag ai">Synthesized by Claude Sonnet 4.5</span></h3>
+      <div class="synth">
+        <p>${esc(p.synthesis)}</p>
+        <p class="disclaimer">Verify against sources below. AI reads and drafts; it does not decide.</p>
+      </div>
+    </section>
+
+    <section class="dsec">
+      <h3>Evidence trail — every finding traceable to source</h3>
+      ${p.evidence.map((e,i)=>`
+        <div class="ev">
+          <div class="fact"><span>${esc(e.fact)}</span><span class="tag ai" style="flex:none">AI-extracted</span></div>
+          <blockquote>“${esc(e.quote)}”</blockquote>
+          <div class="src"><span class="doc">${esc(e.source)}</span><span>${e.date}</span>
+            <button class="viewsrc" data-ev="${i}">View source</button></div>
+        </div>`).join("")}
+      <div class="th-note">Extracted facts carry “AI-extracted” tags — verify against source before acting.</div>
+    </section>
+
+    <section class="dsec">
+      <h3>Current vs. guideline-recommended therapy</h3>
+      <table class="thtable">
+        <thead><tr><th>Current therapy</th><th>Guideline-directed</th></tr></thead>
+        <tbody>${therapyRows(p.therapy)}</tbody>
+      </table>
+      <div class="th-note">Per current heart-failure and valvular guideline-directed criteria. Click any recommendation to view the guideline passage it is based on.</div>
+    </section>`;
+  renderActions(p);
+  $("drawer").classList.add("open");
+  $("scrim").classList.add("open");
+  $("drawerBody").scrollTop = 0;
+}
+
+function renderActions(p){
+  const box = $("drawerActions");
+  if (p.status === "Approved" || p.status === "Dismissed"){
+    const d = p.decision || {kind:p.status, detail:"", by:"Dr. A. Reyes", date:"2026-07-12", audit:auditId(p.mrn)};
+    box.innerHTML = `
+      <div class="decided">
+        <span class="chip ${STATUS_CLASS[p.status]}" style="margin-right:8px">${p.status}</span>
+        <b>${esc(d.by)}</b> · ${d.date}${d.detail ? " — " + esc(d.detail) : ""}
+        <div style="font-size:11px;color:var(--faint);margin-top:4px;font-variant-numeric:tabular-nums">Audit ref: ${d.audit}</div>
+      </div>
+      <p class="fine">A clinician decision is required for every flag. No automated actions are taken.</p>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="btnrow">
+      <button class="btn primary" id="btnApprove">Approve — route to care team</button>
+      <button class="btn secondary" id="btnDismiss">Dismiss</button>
+    </div>
+    <div id="chooser"></div>
+    <p class="fine">A clinician decision is required for every flag. No automated actions are taken.</p>`;
+  $("btnApprove").addEventListener("click", ()=>showApproveChooser(p));
+  $("btnDismiss").addEventListener("click", ()=>showDismissChooser(p));
+}
+
+function showApproveChooser(p){
+  $("chooser").innerHTML = `
+    <div class="chooser">
+      <div class="q">Route to:</div>
+      <div class="opts">
+        ${["Cardiology follow-up visit","Medication optimization consult","Repeat echo"].map(r=>
+          `<button class="btn secondary small route" data-r="${esc(r)}">${esc(r)}</button>`).join("")}
+        <button class="btn secondary small" id="cancelChoose">Cancel</button>
+      </div>
+    </div>`;
+  document.querySelectorAll(".route").forEach(b=>b.addEventListener("click",()=>{
+    applyDecision(p,"Approved","Routed to " + b.dataset.r,
+      "Routed to " + b.dataset.r + ". Action logged to audit trail.");
+  }));
+  $("cancelChoose").addEventListener("click",()=>{ $("chooser").innerHTML=""; });
+}
+
+function showDismissChooser(p){
+  $("chooser").innerHTML = `
+    <div class="chooser">
+      <div class="q">Dismissal requires a reason:</div>
+      <div class="opts">
+        <select id="disReason">
+          <option value="">Select a reason…</option>
+          <option>Already managed elsewhere</option>
+          <option>Clinically inappropriate</option>
+          <option>Data error</option>
+        </select>
+        <button class="btn primary small" id="confirmDismiss" disabled>Confirm dismissal</button>
+        <button class="btn secondary small" id="cancelChoose">Cancel</button>
+      </div>
+    </div>`;
+  const sel = $("disReason"), btn = $("confirmDismiss");
+  sel.addEventListener("change",()=>{ btn.disabled = !sel.value; });
+  btn.addEventListener("click",()=>{
+    applyDecision(p,"Dismissed",sel.value,"Dismissed with reason. Logged.");
+  });
+  $("cancelChoose").addEventListener("click",()=>{ $("chooser").innerHTML=""; });
+}
+
+function applyDecision(p, status, detail, toastMsg){
+  const wasOpen = (p.status === "New" || p.status === "In review");
+  p.status = status;
+  p.decision = {kind:status, detail:detail, by:"Dr. A. Reyes", date:"2026-07-12", audit:auditId(p.mrn)};
+  if (wasOpen){ openFlags -= 1; $("openFlags").textContent = openFlags.toLocaleString("en-US"); }
+  renderTable();
+  const chip = $("drawerStatusChip");
+  if (chip){ chip.textContent = status; chip.className = "chip " + STATUS_CLASS[status]; }
+  renderActions(p);
+  toast(toastMsg, p.decision.audit);
+}
+
+function auditId(mrn){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,"0");
+  return "AUD-" + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + "-" +
+    pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) + "-" + mrn.replace("-","");
+}
+
+function closeDrawer(){
+  $("drawer").classList.remove("open");
+  $("scrim").classList.remove("open");
+  selectedId = null;
+  renderTable();
+}
+
+/* ============================================================ source modal */
+function openSource(evIndex){
+  const p = PATIENTS.find(x=>x.id===selectedId);
+  if(!p) return;
+  const e = p.evidence[evIndex];
+  $("mtitle").textContent = e.source;
+  $("msub").textContent = "Document date " + e.date + " · Patient " + p.name + " (" + p.mrn + ") · Retrieved from record — mock snippet";
+  const before = "… clinical documentation preceding the extracted passage. Findings reviewed in the context of the patient's presentation and prior studies. ";
+  const after = " Impression and recommendations continue below; full document available in the source system. …";
+  $("mdoc").innerHTML = `
+    <div class="dochead"><span>${esc(e.source).toUpperCase()}</span><span>${e.date}</span></div>
+    <p>${esc(before)}<mark>${esc(e.quote)}</mark>${esc(after)}</p>`;
+  $("mfoot").textContent = "Source view is read-only. Extracted passages are highlighted; extraction confidence and page provenance are recorded in the audit trail.";
+  $("modalwrap").classList.add("open");
+}
+function closeSource(){ $("modalwrap").classList.remove("open"); }
+
+function openGuideline(key){
+  const g = GUIDELINES[key];
+  if(!g) return;
+  $("mtitle").textContent = g.title;
+  $("msub").textContent = "Appropriateness Criteria Library · " + g.lib + " · Adopted by UTMB Cardiology — last clinical review 2026-01-15";
+  $("mdoc").innerHTML = `
+    <div class="dochead"><span>APPROPRIATENESS CRITERIA · ${esc(g.lib).toUpperCase()}</span><span>REVIEWED 2026-01</span></div>
+    <span class="gstrength">${esc(g.strength)}</span>
+    <p>${esc(g.before)}<mark>${esc(g.quote)}</mark>${esc(g.after)}</p>`;
+  $("mfoot").textContent = "Criteria are clinician-authored and version-controlled; the highlighted passage is the basis for this recommendation. Generic mock excerpt for demo purposes — production links to the institution's adopted guideline text.";
+  $("modalwrap").classList.add("open");
+}
+
+/* ============================================================ toasts */
+function toast(msg, audit){
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8FD0C6" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+    <div>${esc(msg)}${audit ? `<span class="audit">Audit trail: ${audit} · actor Dr. A. Reyes</span>` : ""}</div>`;
+  $("toasts").appendChild(t);
+  setTimeout(()=>{ t.style.transition="opacity .4s"; t.style.opacity="0"; setTimeout(()=>t.remove(),420); }, 4200);
+}
+
+/* ============================================================ wiring */
+["q","fArea","fTier","fStatus","sortBy"].forEach(id=>{
+  $(id).addEventListener("input", renderTable);
+});
+$("tbody").addEventListener("click", ev=>{
+  const tr = ev.target.closest("tr[data-id]");
+  if (tr) openDrawer(tr.dataset.id);
+});
+$("tbody").addEventListener("keydown", ev=>{
+  if (ev.key === "Enter"){
+    const tr = ev.target.closest("tr[data-id]");
+    if (tr) openDrawer(tr.dataset.id);
+  }
+});
+$("drawerBody").addEventListener("click", ev=>{
+  const b = ev.target.closest(".viewsrc");
+  if (b) return openSource(Number(b.dataset.ev));
+  const gr = ev.target.closest(".gref");
+  if (gr) openGuideline(gr.dataset.g);
+});
+$("dclose").addEventListener("click", closeDrawer);
+$("scrim").addEventListener("click", closeDrawer);
+$("mclose").addEventListener("click", closeSource);
+$("mscrim").addEventListener("click", closeSource);
+document.addEventListener("keydown", ev=>{
+  if (ev.key === "Escape"){
+    if ($("modalwrap").classList.contains("open")) closeSource();
+    else if ($("drawer").classList.contains("open")) closeDrawer();
+  }
+});
+
+renderTable();
+setTimeout(()=>$("scanline").classList.add("show"), 350);
+</script>
+
+</body>
+</html>
