@@ -5,6 +5,12 @@ An interactive, single-page mockup of the clinician-facing **Worklist UI ("cardi
 > **Demo mockup with synthetic data only. Not a Qualified Health product.**
 > All patient names, MRNs, dates, and clinical details are fictional. No backend, no real product code, no real patient information.
 
+## Live demo
+
+**https://danielli5.github.io/tribe-qh-demo/**
+
+No install needed — open the link in any modern browser (desktop, 1280px+ wide). Refresh the page to reset all approvals/dismissals before presenting.
+
 ## What it shows
 
 Modeled on the Anthropic case study of Qualified Health at UTMB: cardiologists log in and see a census of patients pre-screened by AI for optimization opportunities in heart-failure and valvular disease, with every AI-surfaced finding traceable back to source data.
@@ -19,9 +25,9 @@ Modeled on the Anthropic case study of Qualified Health at UTMB: cardiologists l
   6. **Actions** — Approve (with care-team routing) or Dismiss (reason required); both update live state and fire audit-trail toasts
 - **Governance chrome throughout** — "HIPAA · All actions logged" badge, model chip, "AI-extracted" tags, mandatory dismissal reasons, faux audit-log entries on every action
 
-## Running it
+## Running it locally
 
-No build step, no dependencies. Open [`index.html`](index.html) in any modern browser:
+Use the [live demo link](https://danielli5.github.io/tribe-qh-demo/) above, or open [`index.html`](index.html) directly — no build step, no dependencies:
 
 ```
 start index.html        # Windows
