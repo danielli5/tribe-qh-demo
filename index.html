@@ -10,7 +10,7 @@
     --high:#B03A2E; --med:#B4690E; --watch:#4A6E8A; --ok:#2E7D4F;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  body{font-family:"Segoe UI",Tahoma,Arial,sans-serif; font-size:13px; color:var(--txt); background:var(--bg); height:100vh; display:flex; flex-direction:column; overflow:hidden;}
+  body{font-family:"Segoe UI",Tahoma,Arial,sans-serif; font-size:14px; color:var(--txt); background:var(--bg); height:100vh; display:flex; flex-direction:column; overflow:hidden;}
   /* Hyperspace title bar */
   .titlebar{background:var(--epicblue); color:#fff; display:flex; align-items:center; gap:12px; padding:6px 12px; flex:0 0 auto;}
   .epicmark{background:var(--epicred); color:#fff; font-weight:700; font-size:12px; padding:3px 8px; letter-spacing:.5px;}
@@ -24,59 +24,60 @@
   .tab.active{background:var(--panel); color:var(--txt); font-weight:600;}
   /* App header */
   .apphead{background:var(--panel); border-bottom:1px solid var(--line); padding:8px 14px; display:flex; align-items:center; flex-wrap:wrap; gap:8px; flex:0 0 auto;}
-  .apphead h1{font-size:16px; font-weight:600; margin-right:8px;}
-  .chip{display:inline-block; font-size:11px; padding:2px 8px; background:#E4EAEF; color:#27455C; border-radius:2px; white-space:nowrap;}
+  .apphead h1{font-size:18px; font-weight:600; margin-right:8px;}
+  .chip{display:inline-block; font-size:12px; padding:2px 8px; background:#E4EAEF; color:#27455C; border-radius:2px; white-space:nowrap;}
   .chip.gov{background:#DDE8DD; color:#1F4A2E;}
   .chip.model{background:#E3E0EE; color:#3A3163;}
   /* Metrics */
   .metrics{display:flex; gap:8px; padding:8px 14px; background:var(--bg); flex:0 0 auto;}
   .met{background:var(--panel); border:1px solid var(--line); padding:6px 12px; min-width:170px;}
-  .met b{display:block; font-size:17px;}
-  .met span{font-size:11px; color:#33454F;}
-  .metnote{font-size:11px; color:#33454F; align-self:center;}
+  .met b{display:block; font-size:22px;}
+  .met span{font-size:12px; color:#33454F;}
+  .metnote{font-size:12px; color:#33454F; align-self:center;}
   /* Controls */
   .controls{display:flex; gap:8px; padding:0 14px 8px; background:var(--bg); flex:0 0 auto; align-items:center;}
-  select,input[type=text]{font-family:inherit; font-size:12px; padding:4px 6px; border:1px solid var(--line); background:#fff;}
-  .loadline{font-size:11px; color:#27455C; margin-left:auto;}
+  select,input[type=text]{font-family:inherit; font-size:13px; padding:4px 6px; border:1px solid var(--line); background:#fff;}
+  .loadline{font-size:12px; color:#27455C; margin-left:auto;}
   /* Layout */
   .main{flex:1 1 auto; display:flex; min-height:0; padding:0 14px 6px; gap:10px;}
   .tablewrap{flex:1 1 55%; overflow:auto; background:var(--panel); border:1px solid var(--line);}
   table{width:100%; border-collapse:collapse;}
-  th{position:sticky; top:0; background:#F0F3F6; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:#33454F; padding:6px 8px; border-bottom:1px solid var(--line); z-index:1;}
-  td{padding:6px 8px; border-bottom:1px solid #E4EAEF; vertical-align:top; font-size:12px;}
+  th{position:sticky; top:0; background:#F0F3F6; text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:#33454F; padding:7px 9px; border-bottom:1px solid var(--line); z-index:1;}
+  td{padding:8px 9px; border-bottom:1px solid #E4EAEF; vertical-align:top; font-size:14px;}
   tr.row{cursor:pointer;}
   tr.row:hover{background:#EDF3F8;}
   tr.row.sel{background:#DCE9F4;}
-  .tier{font-size:10px; font-weight:700; color:#fff; padding:1px 6px; border-radius:2px;}
+  .tier{font-size:11px; font-weight:700; color:#fff; padding:1px 6px; border-radius:2px;}
   .tier.High{background:var(--high);} .tier.Medium{background:var(--med);} .tier.Watch{background:var(--watch);}
-  .st{font-size:10px; padding:1px 6px; border-radius:2px; background:#E4EAEF; color:#27455C;}
+  .st{font-size:11px; padding:1px 6px; border-radius:2px; background:#E4EAEF; color:#27455C;}
   .st.Approved{background:#DDE8DD; color:#1F4A2E;} .st.Dismissed{background:#EFE2E0; color:#7A3028;} .st.Inreview{background:#FDF2DC; color:#7A5410;}
-  .crit{font-size:10px; background:#E3E0EE; color:#3A3163; padding:1px 6px; border-radius:2px; white-space:nowrap;}
+  .crit{font-size:11px; background:#E3E0EE; color:#3A3163; padding:1px 6px; border-radius:2px; white-space:nowrap;}
+  .crit.ok{background:#DDE8DD; color:#1F4A2E;}
   /* Drawer */
   .drawer{flex:1 1 45%; overflow:auto; background:var(--panel); border:1px solid var(--line); padding:12px 14px; display:none;}
   .drawer.open{display:block;}
-  .drawer h2{font-size:15px;}
-  .drawer .sub{font-size:11px; color:#33454F; margin-bottom:8px;}
-  .sect{margin-top:12px; border-top:1px solid var(--line); padding-top:8px;}
-  .sect h3{font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#33454F; margin-bottom:6px;}
-  .rulebox{background:#F0F3F6; border-left:none; padding:8px; font-size:12px;}
-  .synth{background:#F7F5FC; padding:8px; font-size:12px;}
-  .synthlabel{font-size:10px; color:#3A3163; margin-top:6px;}
-  .ev{border:1px solid #E4EAEF; padding:7px 8px; margin-bottom:6px;}
-  .ev .fact{font-weight:600; font-size:12px;}
-  .ev .quote{font-style:italic; color:#33454F; font-size:12px; margin:3px 0;}
-  .ev .src{font-size:11px; color:#27455C;}
-  .ev .viewsrc{color:#1F4E79; cursor:pointer; text-decoration:underline; font-size:11px;}
-  .thtable{width:100%; border-collapse:collapse; font-size:12px;}
+  .drawer h2{font-size:18px;}
+  .drawer .sub{font-size:13px; color:#33454F; margin-bottom:8px;}
+  .sect{margin-top:14px; border-top:1px solid var(--line); padding-top:9px;}
+  .sect h3{font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:#33454F; margin-bottom:6px;}
+  .rulebox{background:#F0F3F6; border-left:none; padding:9px; font-size:14px;}
+  .synth{background:#F7F5FC; padding:9px; font-size:14px;}
+  .synthlabel{font-size:11px; color:#3A3163; margin-top:6px;}
+  .ev{border:1px solid #E4EAEF; padding:8px 9px; margin-bottom:7px;}
+  .ev .fact{font-weight:600; font-size:14px;}
+  .ev .quote{font-style:italic; color:#33454F; font-size:13px; margin:4px 0;}
+  .ev .src{font-size:12px; color:#27455C;}
+  .ev .viewsrc{color:#1F4E79; cursor:pointer; text-decoration:underline; font-size:12px;}
+  .thtable{width:100%; border-collapse:collapse; font-size:13px;}
   .thtable th{position:static; background:#F0F3F6;}
   .thtable td{border:1px solid #E4EAEF;}
   .actions{margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-  button{font-family:inherit; font-size:12px; padding:6px 12px; border:1px solid var(--line); background:#F0F3F6; cursor:pointer;}
+  button{font-family:inherit; font-size:14px; padding:7px 14px; border:1px solid var(--line); background:#F0F3F6; cursor:pointer;}
   button.primary{background:var(--epicblue); color:#fff; border-color:var(--epicblue2); font-weight:600;}
   button:disabled{opacity:.5; cursor:default;}
-  .actnote{font-size:10px; color:#33454F; margin-top:6px;}
+  .actnote{font-size:11px; color:#33454F; margin-top:6px;}
   /* Footer */
-  .footer{flex:0 0 auto; background:#D7DEE5; font-size:10px; color:#33454F; padding:4px 14px; text-align:center;}
+  .footer{flex:0 0 auto; background:#D7DEE5; font-size:11px; color:#33454F; padding:4px 14px; text-align:center;}
   /* Toast */
   #toasts{position:fixed; bottom:40px; right:20px; z-index:50; display:flex; flex-direction:column; gap:6px;}
   .toast{background:#163A5C; color:#fff; font-size:12px; padding:8px 14px; box-shadow:0 2px 8px rgba(0,0,0,.3); max-width:360px;}
@@ -108,15 +109,13 @@
     <h1>Cardiology Care Gaps — HF and Valvular</h1>
     <span class="chip gov">KP Responsible AI · all actions logged</span>
     <span class="chip model">Claude Sonnet 4.5 · BAA, zero retention</span>
-    <span class="chip">Registry: Healthy Planet HF/Valvular</span>
-    <span class="chip">Ranking: KP tenancy model v3.2</span>
   </div>
   <div class="metrics">
     <div class="met"><b>3,412,908</b><span>adults screened continuously</span></div>
     <div class="met"><b>51,247</b><span>gaps counted (12 mo)</span></div>
     <div class="met"><b id="openflags">47</b><span>open flags — this clinic</span></div>
     <div class="met"><b>81%</b><span>reviewed within 7 days</span></div>
-    <div class="metnote">Screened against clinician-authored Healthy Planet registry criteria.<br>Claude reads free text; criteria decide.</div>
+    <div class="metnote">Claude reads the free text.<br>Clinician-authored criteria decide.</div>
   </div>
   <div class="controls">
     <select id="fCond" onchange="render()"><option value="">All condition areas</option><option>Heart failure</option><option>Valvular</option></select>
@@ -128,7 +127,7 @@
   <div class="main">
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Priority</th><th>Patient</th><th>Condition area</th><th>Care opportunity</th><th>Criterion</th><th>Last relevant event</th><th>Status</th></tr></thead>
+        <thead><tr><th>Priority</th><th>Patient</th><th>Care opportunity</th><th>Criterion</th><th>Status</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -173,18 +172,17 @@ const P = [
    ["BP headroom","BP 132/78 at last 3 visits","Vitals flowsheet","HF-TIT-01"],
    ["No documented intolerance","no intolerance or adverse reaction on file","Problem list / allergy review","HF-TIT-02"]],
   ther:[["ACE inhibitor","lisinopril 5mg","titrate toward 20-40mg as tolerated"]]},
- {n:"Rosa Gonzalez",a:"69F",m:"KP-SC-521837",c:"Heart failure",t:"High",r:2,o:"HFrEF, EF 32%: beta-blocker held at discharge, never restarted",cr:"CG-HF-12",ev:"Discharge · 2026-05-12",s:"New",
-  rule:"CG-HF-12: EF ≤ 40% AND guideline medication held at discharge with a documented restart plan AND no restart order or pharmacy fill since AND no contraindication documented.",
-  syn:"69-year-old woman admitted for heart-failure exacerbation in early May (EF 32% on the inpatient echo). Carvedilol was held during the admission for symptomatic hypotension, with restart planned at cardiology follow-up once volume status stabilized. That visit was cancelled in June and again in early July, and pharmacy records show no carvedilol fill since the hold. Her active medication list still shows carvedilol, so every coded-data query reports her as covered. She is now two months without beta-blockade, still inside the 90-day window after a heart-failure admission when readmission risk is highest.",
+ {n:"Rosa Gonzalez",a:"69F",m:"KP-SC-521837",c:"Heart failure",t:"High",r:2,o:"HFrEF, EF 32%: beta-blocker held, never restarted",cr:"CG-HF-12",ev:"Echo · 2026-05-08",s:"New",
+  rule:"CG-HF-12: EF ≤ 40% AND a guideline medication documented as held with a restart recommendation AND no restart order or pharmacy fill since AND no documented contraindication.",
+  syn:"69-year-old woman admitted for heart-failure exacerbation in early May. Her inpatient echo documented an EF of 32%, and the reading cardiologist noted her carvedilol was held for hypotension and recommended restarting guideline-directed therapy once she stabilized. The follow-up visit was cancelled in June and again in early July, and pharmacy records show no carvedilol fill since the hold. Her active medication list still shows carvedilol, so every coded-data query reports her as covered. She is now two months without beta-blockade, still inside the 90-day window after a heart-failure admission when readmission risk is highest.",
   evid:[
-   ["Beta-blocker held with restart plan","\"carvedilol held for symptomatic hypotension. Do not resume until reassessed in cardiology clinic; restart expected once volume status stabilizes\"","Discharge summary · 2026-05-12","HF-MED-HOLD-01"],
+   ["Beta-blocker held, restart recommended","\"LVEF estimated at 32%. Beta-blocker (carvedilol) currently held in the setting of hypotension. Recommend guideline-directed medical therapy be reassessed and reinstituted once hemodynamically stable\"","Echocardiogram report · 2026-05-08","HF-MED-HOLD-01"],
    ["No fill since the hold, med list unchanged","no carvedilol dispense after 2026-05; active med list still shows carvedilol 12.5mg","Pharmacy fill history · current","HF-MED-HOLD-02"],
-   ["EF 32% on inpatient echo","\"LVEF estimated at 32%\"","Echocardiogram report · 2026-05-08","HF-GDMT-GAP-10"],
    ["Restart visit never happened","cardiology follow-up cancelled 2026-06, rescheduled and cancelled 2026-07","Scheduling history","HF-FUP-GAP-02"]],
   ther:[["Beta-blocker","carvedilol on med list, held since 2026-05, zero fills","restart and titrate carvedilol"],["ACE inhibitor","lisinopril 10mg","continue"],["Diuretic","furosemide 40mg","reassess volume status at restart visit"]]},
  {n:"Samuel Adeyemi",a:"55M",m:"KP-SC-660154",c:"Heart failure",t:"Watch",r:14,o:"Flagged: EF 38%, no beta-blocker — dismissed by Dr. Reyes",cr:"CG-HF-04",ev:"Echo · 2026-01-19",s:"Dismissed",
   rule:"CG-HF-04: EF ≤ 40% on most recent echo AND no beta-blocker on active medication list AND no documented contraindication.",
-  syn:"55-year-old man with EF 38% and no beta-blocker on the KP medication list. Dismissed 2026-06-12 by Dr. Reyes: beta-blocker is prescribed and managed at an outside VA clinic, confirmed with the patient. The dismissal reason feeds back into criterion tuning (outside-med reconciliation).",
+  syn:"55-year-old man with EF 38% and no beta-blocker on the KP medication list. Dismissed 2026-06-12 by Dr. Reyes: beta-blocker is prescribed and managed at an outside VA clinic, confirmed with the patient.",
   evid:[
    ["EF 38% on echo","\"LVEF estimated at 38%\"","Echocardiogram report · 2026-01-19","HF-GDMT-GAP-06"],
    ["Dismissal on record","\"Already managed elsewhere: beta-blocker prescribed at outside VA clinic, confirmed by patient 2026-06-12\"","Dismissal log · 2026-06-12","FDBK-01"]],
@@ -262,9 +260,8 @@ function render(){
     tr.className="row"+(sel===pt.m?" sel":"");
     tr.innerHTML=`<td>${pt.r} <span class="tier ${pt.t}">${pt.t}</span></td>
       <td><b>${esc(pt.n)}</b><br>${pt.a} · ${pt.m}</td>
-      <td>${pt.c}</td><td>${esc(pt.o)}</td>
+      <td>${esc(pt.o)}</td>
       <td><span class="crit">HP registry · ${pt.cr}</span></td>
-      <td>${pt.ev}</td>
       <td><span class="st ${pt.s.replace(" ","")}">${pt.s}</span></td>`;
     tr.onclick=()=>{sel=pt.m; render(); drawer(pt);};
     tb.appendChild(tr);
@@ -274,9 +271,10 @@ function render(){
 function drawer(pt){
   const d=document.getElementById("drawer");
   d.className="drawer open";
+  const ver = pt.s==="Approved";
   const evid=pt.evid.map((e,i)=>`
     <div class="ev">
-      <div class="fact">${esc(e[0])} <span class="crit">AI-extracted, provisional → SmartData ${e[3]}</span></div>
+      <div class="fact">${esc(e[0])} <span class="crit${ver?" ok":""}">${ver?"clinician-verified":"AI-extracted, provisional"} · SmartData ${e[3]}</span></div>
       <div class="quote">${esc(e[1])}</div>
       <div class="src">${esc(e[2])} · <span class="viewsrc" onclick="viewSrc('${pt.m}',${i})">View source</span></div>
     </div>`).join("");
@@ -284,7 +282,7 @@ function drawer(pt){
   const closed = pt.s==="Approved"||pt.s==="Dismissed";
   d.innerHTML=`
     <h2>${esc(pt.n)} <span class="tier ${pt.t}">${pt.t}</span> <span class="st ${pt.s.replace(" ","")}">${pt.s}</span></h2>
-    <div class="sub">${pt.a} · ${pt.m} · ${pt.c} · Care team: SCAL Cardiology Panel 3</div>
+    <div class="sub">${pt.a} · ${pt.m} · ${pt.c} · ${pt.ev}</div>
     ${pt.dism?`<div class="rulebox" style="background:#EFE2E0"><b>Dismissed:</b> ${esc(pt.dism)}<br><span class="synthlabel">Dismissal reasons feed back into criterion tuning. This is the feedback loop.</span></div>`:""}
     <div class="sect"><h3>Why this patient was flagged</h3>
       <div class="rulebox">${esc(pt.rule)}<br><br><span class="crit">Deterministic criterion · clinician-authored · Healthy Planet</span></div></div>
@@ -347,7 +345,7 @@ ${e[1].replace(/^"|"$/g,"")}
 
 ... following text ...
 
-[Extracted by Claude Sonnet 4.5 → provisional SmartData element ${e[3]}.
+[Extracted by Claude Sonnet 4.5 → SmartData element ${e[3]}, ${pt.s==="Approved"?"clinician-verified":"provisional"}.
 Provenance link retained. Extraction is additive-only:
 it can create a flag, never suppress one.]`;
   document.getElementById("modalback").className="open";

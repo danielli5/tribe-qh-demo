@@ -15,7 +15,7 @@ No install needed. Open the link in any modern browser (desktop, 1280px+ wide). 
 
 - **Hyperspace-styled worklist** with 16 synthetic patients (heart failure and valvular disease) ranked by risk tier (High / Medium / Watch), with filters and search
 - **Patient detail drawer** per patient:
-  1. **Why this patient was flagged**: the deterministic, clinician-authored Healthy Planet criterion that fired (e.g. `CG-HF-12: EF <= 40% AND guideline medication held at discharge with a documented restart plan AND no restart order or fill since`)
+  1. **Why this patient was flagged**: the deterministic, clinician-authored Healthy Planet criterion that fired (e.g. `CG-HF-12: EF <= 40% AND a guideline medication documented as held with a restart recommendation AND no restart order or fill since`)
   2. **AI clinical synthesis**, clearly labeled as model-generated ("AI reads and drafts; it does not decide")
   3. **Evidence trail**: every extracted fact with its verbatim source quote, document, date, provisional SmartData element ID, and a "View source" modal
   4. **Current vs guideline-directed therapy** table
@@ -25,8 +25,8 @@ No install needed. Open the link in any modern browser (desktop, 1280px+ wide). 
 ## The 60-second demo script
 
 1. Open on the worklist: *"3.4 million adults screened continuously. 51,247 gaps counted in 12 months. Here are the 47 flags for this clinic."*
-2. Click **Rosa Gonzalez** (rank 2, High): *"Heart-failure admission in May. Her carvedilol was held for low blood pressure, restart planned at a follow-up that was cancelled twice. Zero fills since. Her med list still shows the drug as active, so every coded query says she is covered. The hold was a click, so it is coded. The restart instruction was a sentence, so it never was."*
-3. Click a **"View source"** quote to show the discharge summary passage.
+2. Click **Rosa Gonzalez** (rank 2, High): *"Heart-failure admission in May. Her echo report says her carvedilol was held for low blood pressure and should be restarted once she stabilized. The follow-up was cancelled twice, zero fills since, and her med list still shows the drug as active, so every coded query says she is covered. Cupid coded the 32 in that report. Two sentences later, the cardiologist wrote what to do about it, and that sentence went nowhere."*
+3. Click a **"View source"** quote to show the echo report passage.
 4. **Approve** → route via In Basket → toast: *"SmartData marked clinician-verified, logged to the audit trail."*
 5. Point at **Samuel Adeyemi**'s dismissal: *"When the AI is wrong, the dismissal reason feeds back into criterion tuning. Clinician decides, always."*
 
